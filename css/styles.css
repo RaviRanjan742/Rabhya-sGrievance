@@ -12,14 +12,16 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    background-size: cover;
+    background-repeat: no-repeat;
 }
 
 /* Background Images for Pages 3 and 4 */
 body.page3-active,
 body.page4-active {
     background-image: url('../assets/images/girlfriend.png');
-    background-size:120%;
-    background-position: center;
+    background-size: cover; /* changed from 120% to cover */
+    background-position: center center;
     background-repeat: no-repeat;
     background-attachment: fixed;
 }
@@ -90,7 +92,6 @@ p {
     font-style: italic;
 }
 
-/* Typography for transparent pages */
 body.page3-active h2,
 body.page4-active h2 {
     color: white;
@@ -240,24 +241,25 @@ button:hover {
     align-items: center;
 }
 
-/* ------------------------------
-   ✅ FULLY TRANSPARENT STYLING 
--------------------------------*/
-
-/* Page 3: All form elements fully transparent */
-#page3 .input-group {
+/* Transparent Styling for Page 3 */
+#page3 .input-group,
+#page4 .input-group {
     background-color: transparent !important;
 }
 
-#page3 label {
-    color: white!important;
+#page3 label,
+#page4 label {
+    color: white !important;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
     font-weight: bold;
 }
 
 #page3 input[type="text"],
 #page3 textarea,
-#page3 select {
+#page3 select,
+#page4 input[type="text"],
+#page4 textarea,
+#page4 select {
     background-color: transparent !important;
     border: 2px solid rgba(255, 255, 255, 0.7) !important;
     color: white !important;
@@ -266,21 +268,26 @@ button:hover {
 
 #page3 input[type="text"]::placeholder,
 #page3 textarea::placeholder,
-#page3 select::placeholder {
+#page3 select::placeholder,
+#page4 input[type="text"]::placeholder,
+#page4 textarea::placeholder,
+#page4 select::placeholder {
     color: rgba(255, 255, 255, 0.7) !important;
 }
 
 #page3 input[type="text"]:focus,
 #page3 textarea:focus,
-#page3 select:focus {
+#page3 select:focus,
+#page4 input[type="text"]:focus,
+#page4 textarea:focus,
+#page4 select:focus {
     border-color: rgba(255, 255, 255, 1) !important;
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
-/* Page 3: Emoji selector styling */
+/* Page 3 Emoji Styling */
 #page3 .emoji-option:hover {
     background-color: rgba(255, 255, 255, 0.2);
-    transform: scale(1.1);
 }
 
 #page3 .emoji-option.selected {
@@ -288,48 +295,28 @@ button:hover {
     background-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Page 4: Success message and any form elements fully transparent */
+/* Page 4 Success Message Styling */
 #page4 .success-message {
     background-color: transparent !important;
     border: 2px solid rgba(255, 255, 255, 0.7) !important;
     backdrop-filter: blur(5px);
 }
 
-#page4 .success-message h2 {
-    color: white !important;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-}
-
+#page4 .success-message h2,
 #page4 .success-message p {
     color: white !important;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
-#page4 .input-group {
-    background-color: transparent !important;
-}
-
-#page4 label {
-    color: white !important;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-}
-
-#page4 input[type="text"],
-#page4 textarea,
-#page4 select {
-    background-color: transparent !important;
-    border: 2px solid rgba(255, 255, 255, 0.7) !important;
-    color: white !important;
-}
-
-#page4 input[type="text"]::placeholder,
-#page4 textarea::placeholder,
-#page4 select::placeholder {
-    color: rgba(255, 255, 255, 0.7) !important;
-}
-
-/* Responsive Design */
+/* Responsive Design Fixes */
 @media (max-width: 768px) {
+    body,
+    body.page3-active,
+    body.page4-active {
+        background-size: cover;
+        background-position: center center;
+    }
+
     .container {
         padding: 20px;
         margin: 20px;
