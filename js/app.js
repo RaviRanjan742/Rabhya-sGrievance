@@ -127,29 +127,29 @@ class GrievancePortal {
         submitButton.textContent = 'Sending...';
         submitButton.disabled = true;
         
+        // Always save to database first
+        const savedGrievance = this.db.saveGrievance(grievanceData);
+        console.log('Grievance saved locally:', savedGrievance);
+        
+        // Try to send email
         try {
-            // Save to database first
-            const savedGrievance = this.db.saveGrievance(grievanceData);
-            
-            // Send email using EmailJS
             await this.sendGrievanceEmail(savedGrievance);
+            console.log('Email sent successfully');
             
-            console.log('Grievance saved and email sent:', savedGrievance);
-            
-            // Clear form
+            // Success - clear form and go to thank you page
             this.clearGrievanceForm();
-            
-            // Go to thank you page
             this.goToPage(4);
             
         } catch (error) {
             console.error('Failed to send grievance email:', error);
-            alert('Failed to send grievance via email. The grievance has been saved locally. Please try again later.');
             
-            // Still save locally even if email fails
-            const savedGrievance = this.db.saveGrievance(grievanceData);
+            // Email failed but grievance is already saved
+            alert('Your grievance has been saved successfully! However, we couldn\'t send the email notification to Ravi right now. Don\'t worry, your grievance is safe and you can try again later.');
+            
+            // Still proceed to thank you page since grievance is saved
             this.clearGrievanceForm();
             this.goToPage(4);
+            
         } finally {
             // Reset button state
             submitButton.textContent = originalText;
@@ -157,31 +157,19 @@ class GrievancePortal {
         }
     }
 
-    // Send grievance via EmailJS
+    // Send grievance via EmailJS - FIXED to match your template
     async sendGrievanceEmail(grievanceData) {
-        // EmailJS configuration - Replace these with your actual values
-        const SERVICE_ID = 'service_9940f7p';        // Replace with your EmailJS service ID
-        const TEMPLATE_ID = 'template_wfljobv';      // Replace with your EmailJS template ID
+        // EmailJS configuration
+        const SERVICE_ID = 'service_9940f7p';
+        const TEMPLATE_ID = 'template_wfljobv';
         
-        // Prepare email parameters
-        const emailParams = {
-            to_name: 'Ravi',
-            from_name: grievanceData.submittedByName || grievanceData.submittedBy || 'Anonymous',
-            subject: `New Grievance: ${grievanceData.title}`,
-            grievance_title: grievanceData.title,
-            grievance_complaint: grievanceData.complaint,
-            mood_emoji: grievanceData.mood,
-            solution_request: grievanceData.severity,
-            submitted_by: grievanceData.submittedByName || grievanceData.submittedBy,
-            submission_time: grievanceData.timestamp,
-            grievance_id: grievanceData.id,
-            message: `
+        // Create formatted message matching your template requirements
+        const formattedMessage = `
 🔸 NEW GRIEVANCE SUBMITTED 🔸
 
-Title: ${grievanceData.title}
-Mood: ${grievanceData.mood}
-Submitted by: ${grievanceData.submittedByName || grievanceData.submittedBy}
-Time: ${grievanceData.timestamp}
+📋 Title: ${grievanceData.title}
+😔 Mood: ${grievanceData.mood}
+👤 From: ${grievanceData.submittedByName || grievanceData.submittedBy}
 
 📝 COMPLAINT:
 ${grievanceData.complaint}
@@ -189,9 +177,18 @@ ${grievanceData.complaint}
 💡 WHAT WOULD HELP:
 ${grievanceData.severity}
 
-Grievance ID: #${grievanceData.id}
-            `.trim()
+🕒 Submitted: ${grievanceData.timestamp}
+🆔 Grievance ID: #${grievanceData.id}
+        `.trim();
+        
+        // Prepare email parameters to match your template exactly
+        const emailParams = {
+            Rabhya: grievanceData.submittedByName || grievanceData.submittedBy || 'Anonymous User',
+            message: formattedMessage,
+            time: new Date().toLocaleString()
         };
+        
+        console.log('Sending email with params:', emailParams);
         
         // Send email via EmailJS
         const response = await emailjs.send(SERVICE_ID, TEMPLATE_ID, emailParams);
@@ -279,24 +276,35 @@ Grievance ID: #${grievanceData.id}
 
     // Test email functionality (for debugging)
     async testEmail() {
-        const testGrievance = {
-            id: 'test-' + Date.now(),
-            title: 'Test Grievance',
-            complaint: 'This is a test complaint to verify email functionality.',
-            mood: '🧪',
-            severity: 'Just testing the email system',
-            submittedBy: 'test-user',
-            submittedByName: 'Test User',
-            timestamp: new Date().toLocaleString(),
-            status: 'test'
+        console.log('Testing EmailJS with your template...');
+        
+        const testParams = {
+            Rabhya: 'Test User',
+            message: 'This is a test message to verify the email system is working correctly.',
+            time: new Date().toLocaleString()
         };
         
         try {
-            await this.sendGrievanceEmail(testGrievance);
-            alert('Test email sent successfully!');
+            const response = await emailjs.send('service_9940f7p', 'template_wfljobv', testParams);
+            console.log('✅ Test email sent successfully:', response);
+            alert('Test email sent successfully! Check Ravi\'s inbox.');
+            return true;
         } catch (error) {
-            console.error('Test email failed:', error);
-            alert('Test email failed. Check console for details.');
+            console.error('❌ Test email failed:', error);
+            
+            // Common error diagnostics
+            if (error.status === 422) {
+                console.error('Template variables don\'t match. Check your EmailJS template.');
+            } else if (error.status === 400) {
+                console.error('Invalid service ID or template ID. Check your EmailJS dashboard.');
+            } else if (error.status === 401) {
+                console.error('Invalid public key. Check your EmailJS account settings.');
+            } else if (error.text) {
+                console.error('Error details:', error.text);
+            }
+            
+            alert('Test email failed. Check browser console for details.');
+            return false;
         }
     }
 
