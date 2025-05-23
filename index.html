@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rani's Grievance Portal</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Page 1: Welcome -->
+        <div class="page active" id="page1">
+            <h1>Welcome to your very own</h1>
+            <h2>Grievance Portal</h2>
+            <div class="welcome-text">You can submit your grievances for my viewing pleasure!</div>
+            <div class="subtitle">Now log in to your account</div>
+            <button onclick="goToPage(2)">Login</button>
+        </div>
+
+        <!-- Page 2: Login -->
+        <div class="page" id="page2">
+            <h2>Rabhya's Grievance Portal</h2>
+            <div class="error-message hidden" id="loginError">
+                Invalid credentials! Try again.
+            </div>
+            <form onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+
+        <!-- Page 3: Submit Grievance -->
+        <div class="page page-with-photo" id="page3">
+            <h2>Submit a Grievance</h2>
+            <form onsubmit="handleGrievance(event)">
+                <div class="input-group">
+                    <label for="title">Title</label>
+                    <input type="text" id="title" required placeholder="What's the issue?">
+                </div>
+
+                <div class="input-group">
+                    <label for="complaint">What is bothering you?</label>
+                    <textarea id="complaint" required placeholder="Tell me all about it..."></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label>Mood Emoji</label>
+                    <div class="emoji-selector">
+                        <span class="emoji-option" data-emoji="😠" onclick="selectEmoji(this)">😠</span>
+                        <span class="emoji-option" data-emoji="😤" onclick="selectEmoji(this)">😤</span>
+                        <span class="emoji-option" data-emoji="😢" onclick="selectEmoji(this)">😢</span>
+                        <span class="emoji-option" data-emoji="😔" onclick="selectEmoji(this)">😔</span>
+                        <span class="emoji-option" data-emoji="🙄" onclick="selectEmoji(this)">🙄</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="severity">What can fix your mood?</label>
+                    <textarea id="severity" required placeholder="Tell me what would make you feel better..."></textarea>
+                </div>
+
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+
+        <!-- Page 4: Thank You -->
+        <div class="page page-with-photo" id="page4">
+            <div class="success-message">
+                <h2>Thank you, Rabhya!</h2>
+                <p>Your grievance has been sent to Ravi.<br>He will get back to you very soon!</p>
+            </div>
+            <button onclick="goToPage(3)">Submit Another</button>
+            <button onclick="showGrievances()">View All Grievances</button>
+        </div>
+
+        <!-- Grievances List (Hidden initially) -->
+        <div class="page" id="grievancesPage">
+            <h2>All Grievances</h2>
+            <div id="grievancesList"></div>
+            <button onclick="goToPage(4)">Back</button>
+            <button onclick="clearGrievances()">Clear All</button>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
