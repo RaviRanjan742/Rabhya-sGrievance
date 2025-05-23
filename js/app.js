@@ -3,6 +3,7 @@ class GrievancePortal {
     constructor() {
         this.currentUser = null;
         this.selectedMood = '';
+        this.db = new GrievanceDB(); // Initialize database
         this.init();
     }
 
@@ -61,13 +62,14 @@ class GrievancePortal {
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
         
-        // Simple authentication - you can modify this
-        if (username && password) {
-            // Create a simple user object
-            this.currentUser = { username: username, name: username };
+        // Use database authentication
+        const user = this.db.authenticateUser(username, password);
+        
+        if (user) {
+            this.currentUser = user;
             this.goToPage(3);
             this.clearLoginForm();
-            console.log(`User ${username} logged in successfully`);
+            console.log(`User ${user.name} logged in successfully`);
         } else {
             // Show error
             const errorElement = document.getElementById('loginError');
@@ -95,8 +97,8 @@ class GrievancePortal {
         this.selectedMood = element.dataset.emoji;
     }
 
-    // Handle grievance submission
-    handleGrievance(event) {
+    // Handle grievance submission with EmailJS
+    async handleGrievance(event) {
         event.preventDefault();
         
         const title = document.getElementById('title').value.trim();
@@ -111,37 +113,100 @@ class GrievancePortal {
 
         // Create grievance object
         const grievanceData = {
-            id: Date.now(),
             title: title,
             complaint: complaint,
             mood: this.selectedMood || '😐',
             severity: severity,
             submittedBy: this.currentUser ? this.currentUser.username : 'anonymous',
-            timestamp: new Date().toLocaleString(),
-            status: 'pending'
+            submittedByName: this.currentUser ? this.currentUser.name : 'Anonymous'
         };
         
-        // Save to localStorage (simple storage solution)
-        this.saveGrievance(grievanceData);
-        console.log('Grievance saved:', grievanceData);
+        // Show loading state
+        const submitButton = event.target.querySelector('button[type="submit"]');
+        const originalText = submitButton.textContent;
+        submitButton.textContent = 'Sending...';
+        submitButton.disabled = true;
         
-        // Clear form
-        this.clearGrievanceForm();
-        
-        // Go to thank you page
-        this.goToPage(4);
+        try {
+            // Save to database first
+            const savedGrievance = this.db.saveGrievance(grievanceData);
+            
+            // Send email using EmailJS
+            await this.sendGrievanceEmail(savedGrievance);
+            
+            console.log('Grievance saved and email sent:', savedGrievance);
+            
+            // Clear form
+            this.clearGrievanceForm();
+            
+            // Go to thank you page
+            this.goToPage(4);
+            
+        } catch (error) {
+            console.error('Failed to send grievance email:', error);
+            alert('Failed to send grievance via email. The grievance has been saved locally. Please try again later.');
+            
+            // Still save locally even if email fails
+            const savedGrievance = this.db.saveGrievance(grievanceData);
+            this.clearGrievanceForm();
+            this.goToPage(4);
+        } finally {
+            // Reset button state
+            submitButton.textContent = originalText;
+            submitButton.disabled = false;
+        }
     }
 
-    // Save grievance to localStorage
+    // Send grievance via EmailJS
+    async sendGrievanceEmail(grievanceData) {
+        // EmailJS configuration - Replace these with your actual values
+        const SERVICE_ID = 'service_9940f7p';        // Replace with your EmailJS service ID
+        const TEMPLATE_ID = 'template_wfljobv';      // Replace with your EmailJS template ID
+        
+        // Prepare email parameters
+        const emailParams = {
+            to_name: 'Ravi',
+            from_name: grievanceData.submittedByName || grievanceData.submittedBy || 'Anonymous',
+            subject: `New Grievance: ${grievanceData.title}`,
+            grievance_title: grievanceData.title,
+            grievance_complaint: grievanceData.complaint,
+            mood_emoji: grievanceData.mood,
+            solution_request: grievanceData.severity,
+            submitted_by: grievanceData.submittedByName || grievanceData.submittedBy,
+            submission_time: grievanceData.timestamp,
+            grievance_id: grievanceData.id,
+            message: `
+🔸 NEW GRIEVANCE SUBMITTED 🔸
+
+Title: ${grievanceData.title}
+Mood: ${grievanceData.mood}
+Submitted by: ${grievanceData.submittedByName || grievanceData.submittedBy}
+Time: ${grievanceData.timestamp}
+
+📝 COMPLAINT:
+${grievanceData.complaint}
+
+💡 WHAT WOULD HELP:
+${grievanceData.severity}
+
+Grievance ID: #${grievanceData.id}
+            `.trim()
+        };
+        
+        // Send email via EmailJS
+        const response = await emailjs.send(SERVICE_ID, TEMPLATE_ID, emailParams);
+        console.log('Email sent successfully:', response);
+        return response;
+    }
+
+    // Save grievance to database (using GrievanceDB)
     saveGrievance(grievanceData) {
-        let grievances = JSON.parse(localStorage.getItem('grievances') || '[]');
-        grievances.push(grievanceData);
-        localStorage.setItem('grievances', JSON.stringify(grievances));
+        return this.db.saveGrievance(grievanceData);
     }
 
-    // Get all grievances from localStorage
+    // Get all grievances from database
     getAllGrievances() {
-        return JSON.parse(localStorage.getItem('grievances') || '[]');
+        return this.db.getAllGrievances();
     }
 
     // Clear grievance form
@@ -203,13 +268,49 @@ class GrievancePortal {
         return div.innerHTML;
     }
 
-    // Clear all grievances
+    // Clear all grievances using database
     clearGrievances() {
         if (confirm('Are you sure you want to clear all grievances? This action cannot be undone.')) {
-            localStorage.removeItem('grievances');
+            this.db.clearAllGrievances();
             this.showGrievances();
             console.log('All grievances cleared');
         }
+    }
+
+    // Test email functionality (for debugging)
+    async testEmail() {
+        const testGrievance = {
+            id: 'test-' + Date.now(),
+            title: 'Test Grievance',
+            complaint: 'This is a test complaint to verify email functionality.',
+            mood: '🧪',
+            severity: 'Just testing the email system',
+            submittedBy: 'test-user',
+            submittedByName: 'Test User',
+            timestamp: new Date().toLocaleString(),
+            status: 'test'
+        };
+        
+        try {
+            await this.sendGrievanceEmail(testGrievance);
+            alert('Test email sent successfully!');
+        } catch (error) {
+            console.error('Test email failed:', error);
+            alert('Test email failed. Check console for details.');
+        }
+    }
+
+    // Additional utility methods using database
+    getGrievanceStats() {
+        return {
+            total: this.db.getGrievancesCount(),
+            pending: this.db.getGrievancesByStatus('pending').length,
+            resolved: this.db.getGrievancesByStatus('resolved').length
+        };
+    }
+
+    exportGrievances() {
+        this.db.exportGrievances();
     }
 }
 
@@ -243,3 +344,6 @@ function clearGrievances() {
 
 // Console commands for debugging
 window.grievanceApp = app;
+
+// Add test email function to window for debugging
+window.testEmail = () => app.testEmail();
