@@ -157,11 +157,22 @@ class GrievancePortal {
         }
     }
 
-    // Send grievance via EmailJS - FIXED to match your template
+    // Enhanced EmailJS send method with detailed debugging
     async sendGrievanceEmail(grievanceData) {
+        console.log('🔍 Starting email send process...');
+        
+        // Check if EmailJS is loaded
+        if (typeof emailjs === 'undefined') {
+            throw new Error('EmailJS library not loaded');
+        }
+        console.log('✅ EmailJS library loaded');
+        
         // EmailJS configuration
         const SERVICE_ID = 'service_9940f7p';
         const TEMPLATE_ID = 'template_wfljobv';
+        
+        console.log('📧 Using Service ID:', SERVICE_ID);
+        console.log('📋 Using Template ID:', TEMPLATE_ID);
         
         // Create formatted message matching your template requirements
         const formattedMessage = `
@@ -188,12 +199,53 @@ ${grievanceData.severity}
             time: new Date().toLocaleString()
         };
         
-        console.log('Sending email with params:', emailParams);
+        console.log('📤 Email parameters:', emailParams);
+        console.log('🔑 Public Key configured:', '6aN6bauWpZH4EqUEF');
         
-        // Send email via EmailJS
-        const response = await emailjs.send(SERVICE_ID, TEMPLATE_ID, emailParams);
-        console.log('Email sent successfully:', response);
-        return response;
+        try {
+            // Send email via EmailJS with detailed logging
+            console.log('📡 Attempting to send email...');
+            const response = await emailjs.send(SERVICE_ID, TEMPLATE_ID, emailParams);
+            console.log('✅ Email sent successfully!', response);
+            return response;
+            
+        } catch (error) {
+            console.error('❌ Email send failed:', error);
+            
+            // Detailed error diagnosis
+            if (error.status) {
+                console.error('HTTP Status:', error.status);
+                
+                switch (error.status) {
+                    case 400:
+                        console.error('🚨 Bad Request - Check your Service ID and Template ID');
+                        break;
+                    case 401:
+                        console.error('🚨 Unauthorized - Check your Public Key');
+                        break;
+                    case 402:
+                        console.error('🚨 Payment Required - Check your EmailJS quota');
+                        break;
+                    case 422:
+                        console.error('🚨 Template Error - Check template variable names');
+                        console.error('Expected variables: Rabhya, message, time');
+                        console.error('Sent variables:', Object.keys(emailParams));
+                        break;
+                    case 429:
+                        console.error('🚨 Rate Limited - Too many requests');
+                        break;
+                    default:
+                        console.error('🚨 Unknown error status:', error.status);
+                }
+            }
+            
+            if (error.text) {
+                console.error('Error details:', error.text);
+            }
+            
+            // Re-throw the error so it's caught by the calling function
+            throw error;
+        }
     }
 
     // Save grievance to database (using GrievanceDB)
@@ -274,36 +326,63 @@ ${grievanceData.severity}
         }
     }
 
-    // Test email functionality (for debugging)
-    async testEmail() {
-        console.log('Testing EmailJS with your template...');
+    // Enhanced test function with comprehensive diagnostics
+    async testEmailJS() {
+        console.log('🧪 Running comprehensive EmailJS test...');
+        console.log('==========================================');
         
+        // Step 1: Check library
+        console.log('1️⃣ Checking EmailJS library...');
+        if (typeof emailjs === 'undefined') {
+            console.error('❌ EmailJS library not found!');
+            alert('EmailJS library not loaded. Check your script tag.');
+            return false;
+        }
+        console.log('✅ EmailJS library loaded');
+        
+        // Step 2: Check configuration
+        console.log('2️⃣ Checking configuration...');
+        console.log('Service ID: service_9940f7p');
+        console.log('Template ID: template_wfljobv');
+        console.log('Public Key: 6aN6bauWpZH4EqUEF');
+        
+        // Step 3: Test with minimal parameters
+        console.log('3️⃣ Testing with minimal parameters...');
         const testParams = {
             Rabhya: 'Test User',
             message: 'This is a test message to verify the email system is working correctly.',
             time: new Date().toLocaleString()
         };
         
+        console.log('Test parameters:', testParams);
+        
         try {
+            console.log('📡 Sending test email...');
             const response = await emailjs.send('service_9940f7p', 'template_wfljobv', testParams);
-            console.log('✅ Test email sent successfully:', response);
-            alert('Test email sent successfully! Check Ravi\'s inbox.');
+            console.log('✅ SUCCESS! Test email sent:', response);
+            alert('✅ Test email sent successfully! Check the recipient inbox.');
             return true;
-        } catch (error) {
-            console.error('❌ Test email failed:', error);
             
-            // Common error diagnostics
+        } catch (error) {
+            console.error('❌ Test failed:', error);
+            
+            // Provide specific guidance based on error
+            let errorMsg = 'Test email failed. ';
+            
             if (error.status === 422) {
-                console.error('Template variables don\'t match. Check your EmailJS template.');
+                errorMsg += 'Template variable mismatch. Check your EmailJS template has variables: {{Rabhya}}, {{message}}, {{time}}';
             } else if (error.status === 400) {
-                console.error('Invalid service ID or template ID. Check your EmailJS dashboard.');
+                errorMsg += 'Invalid Service ID or Template ID. Double-check these in your EmailJS dashboard.';
             } else if (error.status === 401) {
-                console.error('Invalid public key. Check your EmailJS account settings.');
-            } else if (error.text) {
-                console.error('Error details:', error.text);
+                errorMsg += 'Invalid Public Key. Check your EmailJS account settings.';
+            } else if (error.status === 402) {
+                errorMsg += 'EmailJS quota exceeded. Check your account limits.';
+            } else {
+                errorMsg += `HTTP ${error.status}: ${error.text || 'Unknown error'}`;
             }
             
-            alert('Test email failed. Check browser console for details.');
+            alert(errorMsg);
+            console.error('Full error details:', error);
             return false;
         }
     }
@@ -319,6 +398,41 @@ ${grievanceData.severity}
 
     exportGrievances() {
         this.db.exportGrievances();
+    }
+
+    // Quick checklist function
+    emailJSChecklist() {
+        console.log('📋 EmailJS Setup Checklist:');
+        console.log('==========================================');
+        console.log('1. ✅ EmailJS script loaded in HTML');
+        console.log('2. ✅ Public key initialized: 6aN6bauWpZH4EqUEF');
+        console.log('3. ❓ Service connected (Gmail/Outlook/etc)?');
+        console.log('4. ❓ Template created with variables: {{Rabhya}}, {{message}}, {{time}}?');
+        console.log('5. ❓ Service ID correct: service_9940f7p?');
+        console.log('6. ❓ Template ID correct: template_wfljobv?');
+        console.log('7. ❓ EmailJS account active and not over quota?');
+        console.log('');
+        console.log('💡 Run window.testEmailJS() to test your setup');
+        console.log('💡 Run window.quickEmailTest() for a simple test');
+    }
+
+    // Simple quick test
+    async quickEmailTest() {
+        console.log('🚀 Quick Email Test...');
+        try {
+            const response = await emailjs.send('service_9940f7p', 'template_wfljobv', {
+                Rabhya: 'Quick Test',
+                message: 'This is a quick test message.',
+                time: new Date().toLocaleString()
+            });
+            console.log('✅ Quick test SUCCESS!', response);
+            alert('✅ Quick test email sent successfully!');
+            return true;
+        } catch (error) {
+            console.error('❌ Quick test FAILED:', error);
+            alert(`❌ Quick test failed: ${error.text || error.message}`);
+            return false;
+        }
     }
 }
 
@@ -353,5 +467,14 @@ function clearGrievances() {
 // Console commands for debugging
 window.grievanceApp = app;
 
-// Add test email function to window for debugging
-window.testEmail = () => app.testEmail();
+// Add debugging functions to window for easy access
+window.testEmailJS = () => app.testEmailJS();
+window.emailJSChecklist = () => app.emailJSChecklist();
+window.quickEmailTest = () => app.quickEmailTest();
+
+// Auto-run checklist on load for debugging
+console.log('🔧 Grievance Portal loaded with debugging enabled');
+console.log('💡 Available debug commands:');
+console.log('   - window.testEmailJS() - Full EmailJS test');
+console.log('   - window.quickEmailTest() - Quick email test');
+console.log('   - window.emailJSChecklist() - Setup checklist');
