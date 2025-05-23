@@ -18,7 +18,7 @@ body {
 body.page3-active,
 body.page4-active {
     background-image: url('../assets/images/girlfriend.png');
-    background-size:100%;
+    background-size:120%;
     background-position: center;
     background-repeat: no-repeat;
     background-attachment: fixed;
